@@ -158,7 +158,7 @@ elif page == "🎯 Optimisation Campagne":
     st.subheader("Configuration de l'Optimisation de Campagne")
     
     st.markdown("**Sélectionner une Campagne à Configurer**")
-    st.selectbox("Campagne", [f"{cfg['nom_campagne']} (Client: {cfg['client']})"], disabled=True, key="select_campagne")
+    st.selectbox("Campagne", [f"{cfg['nom_campagne']} (Client: {cfg['client']})"], key="select_campagne")
     
     st.markdown("---")
     
@@ -177,26 +177,41 @@ elif page == "🎯 Optimisation Campagne":
     
     with tab1:
         st.markdown("Les informations générales sont définies dans 'Gestion des Campagnes'.")
-        st.text_input("Public cible", value=cfg['audience_cible'], disabled=True, key="input_public")
-        st.text_area("Objectifs", value=cfg['objectifs'], disabled=True, key="input_objectifs")
+        st.text_input("Public cible", value=cfg['audience_cible'], key="input_public")
+        st.text_area("Objectifs", value=cfg['objectifs'], key="input_objectifs")
     
     with tab2:
         st.markdown("#### Régies sélectionnées")
+        if "sel_regies" not in st.session_state:
+            st.session_state.sel_regies = {r: True for r in cfg['regies']}
         for i, r in enumerate(cfg['regies']):
-            st.checkbox(r, value=True, disabled=True, key=f"regie_{i}")
+            st.session_state.sel_regies[r] = st.checkbox(r, value=st.session_state.sel_regies.get(r, True), key=f"regie_{i}")
         st.markdown("#### Radios sélectionnées")
+        if "sel_radios" not in st.session_state:
+            st.session_state.sel_radios = {r: True for r in cfg['radios']}
         for i, r in enumerate(cfg['radios']):
-            st.checkbox(r, value=True, disabled=True, key=f"radio_{i}")
+            st.session_state.sel_radios[r] = st.checkbox(r, value=st.session_state.sel_radios.get(r, True), key=f"radio_{i}")
     
     with tab3:
         st.markdown("#### Tranches horaires définies")
         df_slots = pd.DataFrame([{**s, "Début": s["start"], "Fin": s["end"]} for s in cfg['timeSlots']])
         st.dataframe(df_slots[['name', 'Début', 'Fin']].rename(columns={'name': 'Nom'}), hide_index=True)
-        st.button("➕ Ajouter une tranche", disabled=True, key="btn_ajout_tranche")
+        with st.expander("➕ Ajouter une tranche", expanded=False):
+            new_slot_name = st.text_input("Nom", placeholder="ex: Soirée", key="new_slot_name")
+            new_slot_start = st.text_input("Heure début (HH:MM)", "19:00", key="new_slot_start")
+            new_slot_end = st.text_input("Heure fin (HH:MM)", "22:00", key="new_slot_end")
+            st.caption(f"Nouvelle tranche : {new_slot_name or '(vide)'} {new_slot_start}-{new_slot_end}")
         st.markdown("---")
         st.markdown("#### Spots exacts par tranche horaire (par jour)")
         st.info("Définissez exactement N spots entre une heure de début et de fin.")
-        st.button("➕ Ajouter une règle", disabled=True, key="btn_ajout_regle_slots")
+        with st.expander("➕ Ajouter une règle", expanded=False):
+            exact_slot = st.selectbox("Tranche", [s['name'] for s in cfg['timeSlots']], key="exact_slot")
+            exact_n = st.number_input("Nombre de spots exact", 0, 50, 3, key="exact_n")
+            exact_scope = st.radio("Portée", ["Toute la période", "Date précise"], horizontal=True, key="exact_scope")
+            if exact_scope == "Date précise":
+                st.date_input("Date", key="exact_date")
+            exact_radios = st.multiselect("Radios (optionnel)", cfg['radios'], key="exact_radios")
+            st.caption(f"Règle : {exact_n} spots dans {exact_slot}")
     
     with tab4:
         st.markdown("#### Exclusions")
@@ -210,47 +225,96 @@ elif page == "🎯 Optimisation Campagne":
         ]
         for t, d in excl_types:
             st.markdown(f"- **{t}** : {d}")
-        st.markdown("**Aucune exclusion définie.**")
-        st.button("➕ Ajouter une exclusion", disabled=True, key="btn_ajout_exclusion")
+        with st.expander("➕ Ajouter une exclusion", expanded=False):
+            excl_type = st.selectbox("Type d'exclusion", [t for t, _ in excl_types], key="excl_type")
+            if excl_type == "Jour spécifique":
+                st.date_input("Date à exclure", key="excl_date")
+            elif excl_type == "Période":
+                st.date_input("Date de début", key="excl_period_start")
+                st.date_input("Date de fin", key="excl_period_end")
+            elif excl_type == "Jour de la semaine":
+                st.selectbox("Jour", ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"], key="excl_weekday")
+            elif excl_type == "Tranche horaire":
+                st.text_input("Heure début (HH:MM)", "06:00", key="excl_slot_start")
+                st.text_input("Heure fin (HH:MM)", "09:00", key="excl_slot_end")
+            else:
+                st.selectbox("Jour", ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"], key="excl_slotofday_jour")
+                st.text_input("Heure début (HH:MM)", key="excl_slotofday_start")
+                st.text_input("Heure fin (HH:MM)", key="excl_slotofday_end")
     
     with tab5:
         st.markdown("#### Contraintes de répartition GRP par régie (% min. du GRP total)")
-        df_grp = pd.DataFrame([{"Régie": k, "% min": f"{v}%"} for k, v in cfg['grpConstraints']['regie'].items()])
-        st.dataframe(df_grp, hide_index=True)
+        if "grp_regie" not in st.session_state:
+            st.session_state.grp_regie = dict(cfg['grpConstraints']['regie'])
+        cols = st.columns(len(cfg['regies']))
+        for i, r in enumerate(cfg['regies']):
+            with cols[i]:
+                st.session_state.grp_regie[r] = st.number_input(
+                    f"% min {r}", min_value=0, max_value=100, value=int(st.session_state.grp_regie.get(r, 0)),
+                    key=f"grp_regie_{i}"
+                )
         st.caption("Exemple du PRD : Régie 1 ≥ 30% du GRP total")
         st.markdown("---")
         st.markdown("#### Contraintes GRP par Groupes de Tranches Horaires")
-        st.info("Définissez des groupes de tranches (ex: Matin) et un % minimum du GRP total. Bouton : + Ajouter un groupe de tranches.")
-        st.markdown("**Aucun groupe de tranches défini.**")
+        st.info("Définissez des groupes de tranches (ex: Matin) et un % minimum du GRP total.")
+        with st.expander("➕ Ajouter un groupe de tranches", expanded=False):
+            grp_nom = st.text_input("Nom du groupe", placeholder="ex: Matin", key="grp_nom")
+            grp_pct = st.number_input("% GRP min", 0, 100, 0, key="grp_pct")
+            slots_sel = st.multiselect("Tranches dans ce groupe", [s['name'] for s in cfg['timeSlots']], key="grp_slots")
+            if slots_sel:
+                st.caption(f"Tranches sélectionnées : {', '.join(slots_sel)}")
         st.markdown("---")
         st.markdown("#### Contraintes GRP par Tranche Horaire Individuelle")
         st.caption("Pour chaque tranche : soit % min du GRP total, soit GRP min absolu (mutuellement exclusifs).")
         if cfg['timeSlots']:
-            st.dataframe(pd.DataFrame([{"Tranche": s['name'], "Plage": f"{s['start']}-{s['end']}", "% GRP total (min)": "-", "GRP absolu (min)": "-"} for s in cfg['timeSlots']]), hide_index=True)
+            if "grp_slots_pct" not in st.session_state:
+                st.session_state.grp_slots_pct = {s['name']: 0 for s in cfg['timeSlots']}
+            if "grp_slots_abs" not in st.session_state:
+                st.session_state.grp_slots_abs = {s['name']: 0.0 for s in cfg['timeSlots']}
+            for i, s in enumerate(cfg['timeSlots']):
+                with st.expander(f"{s['name']} ({s['start']}-{s['end']})", expanded=False):
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.session_state.grp_slots_pct[s['name']] = st.number_input("% GRP total", 0, 100, int(st.session_state.grp_slots_pct.get(s['name'], 0)), key=f"slot_pct_{i}")
+                    with c2:
+                        st.session_state.grp_slots_abs[s['name']] = st.number_input("GRP absolu (min)", 0.0, 100.0, float(st.session_state.grp_slots_abs.get(s['name'], 0)), step=0.5, key=f"slot_abs_{i}")
     
     with tab6:
         st.markdown("#### GRP Maximal par Radio")
         st.markdown("Limitez le % maximum du GRP total pour une radio donnée.")
-        st.markdown("Paramètres : **Radio**, **% GRP Maximal**, **Type de période** (Jours de la semaine / Dates spécifiques), **Tranches horaires**.")
-        st.markdown("**Aucune contrainte définie.**")
-        st.button("➕ Ajouter contrainte", disabled=True, key="btn_ajout_contrainte_maxgrp")
+        with st.expander("➕ Ajouter une contrainte", expanded=True):
+            maxgrp_radio = st.selectbox("Radio", cfg['radios'], key="maxgrp_radio")
+            maxgrp_pct = st.number_input("% GRP Maximal", 0, 100, 30, key="maxgrp_pct")
+            maxgrp_type = st.radio("Type de période", ["Jours de la semaine", "Dates spécifiques"], horizontal=True, key="maxgrp_type")
+            maxgrp_slots = st.multiselect("Tranches horaires", [s['name'] for s in cfg['timeSlots']], key="maxgrp_slots")
+            if maxgrp_slots:
+                st.caption(f"Tranches : {', '.join(maxgrp_slots)}")
     
     with tab7:
         st.markdown("#### Pression Journalière")
         st.markdown("Objectifs de GRP minimum par jour.")
-        st.markdown("Ajout en lot : **Tous les jours** | **Jours de semaine** | **Week-end**")
-        st.markdown("Pour chaque cible : **Date** (si applicable), **Type** (GRP min ou % min), **Valeur**.")
-        st.markdown("**Aucun objectif journalier défini.**")
-        st.button("➕ Ajouter un objectif journalier", disabled=True, key="btn_ajout_objectif_journalier")
+        with st.expander("➕ Ajouter un objectif journalier", expanded=True):
+            daily_batch = st.selectbox("Ajout en lot", ["Tous les jours", "Jours de semaine", "Week-end"], key="daily_batch")
+            daily_date = st.date_input("Date (si spécifique)", key="daily_date")
+            daily_type = st.radio("Type", ["GRP minimum", "% minimum"], horizontal=True, key="daily_type")
+            daily_val = st.number_input("Valeur", 0.0, 1000.0, 5.0, step=0.5, key="daily_val")
+            st.caption(f"Objectif : {daily_val} {'GRP' if daily_type == 'GRP minimum' else '%'} sur {daily_batch}")
     
     with tab8:
         st.markdown("#### Bornes Spots par Radio")
         st.markdown("Min/Max de spots par radio, selon la portée et le temps.")
-        st.markdown("- **Portée** : Toute la période | Date précise (YYYY-MM-DD)")
-        st.markdown("- **Temps** : Toute la journée | Plage unique (Début–Fin) | Plusieurs plages (HH:MM–HH:MM; séparées par virgules)")
-        st.markdown("- **Radios** : optionnel, filtrer par radios")
-        st.markdown("**Aucune règle définie.**")
-        st.button("➕ Ajouter une règle", disabled=True, key="btn_ajout_regle_bornes")
+        with st.expander("➕ Ajouter une règle", expanded=True):
+            borne_portee = st.radio("Portée", ["Toute la période", "Date précise"], horizontal=True, key="borne_portee")
+            if borne_portee == "Date précise":
+                st.date_input("Date (YYYY-MM-DD)", key="borne_date_sel")
+            borne_temps = st.selectbox("Temps", ["Toute la journée", "Plage unique", "Plusieurs plages"], key="borne_temps")
+            borne_radios = st.multiselect("Radios (optionnel)", cfg['radios'], default=cfg['radios'], key="borne_radios")
+            c1, c2 = st.columns(2)
+            with c1:
+                borne_min = st.number_input("Min spots", 0, 100, 0, key="borne_min")
+            with c2:
+                borne_max = st.number_input("Max spots", 0, 100, 10, key="borne_max")
+            st.caption(f"Règle : {borne_min}-{borne_max} spots pour {', '.join(borne_radios)}")
     
     with tab9:
         st.markdown("### Récapitulatif de la Campagne")
@@ -263,7 +327,7 @@ elif page == "🎯 Optimisation Campagne":
         st.markdown("**Exclusions** : Aucune")
         st.markdown("**Pression journalière** : Aucune")
         st.markdown("---")
-        st.checkbox("Activer le quiconce (répartition sur plusieurs jours)", value=False, disabled=True, key="cb_quiconce")
+        st.checkbox("Activer le quiconce (répartition sur plusieurs jours)", value=False, key="cb_quiconce")
         st.caption("Quiconce : évite de concentrer les spots sur un seul jour.")
         st.markdown("---")
         st.markdown('<div class="disabled-box">', unsafe_allow_html=True)
