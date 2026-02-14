@@ -10,7 +10,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
 
 st.set_page_config(
     page_title="MediaMatrix - Optimisation Radio",
@@ -94,7 +93,11 @@ def load_demo_data():
     df_spots = pd.DataFrame(spots_data)
     return campaign_config, optimization_results, df_spots
 
-cfg, opt, df_spots = load_demo_data()
+try:
+    cfg, opt, df_spots = load_demo_data()
+except Exception as e:
+    st.error(f"Erreur chargement des données : {e}")
+    st.stop()
 
 st.markdown("<h1>MediaMatrix - Optimisation de Campagnes Radio</h1>", unsafe_allow_html=True)
 
@@ -119,7 +122,7 @@ if page == "📄 Fichier Source":
     st.markdown("✅ **Fichier chargé** : GRP_demo.csv")
     st.markdown("- 3 726 spots | 3 régies | 4 radios | Période : 19/08-21/08/2024")
     st.markdown('</div>', unsafe_allow_html=True)
-    st.button("📤 Charger un nouveau CSV", disabled=True)
+    st.button("📤 Charger un nouveau CSV", disabled=True, key="btn_charger_csv")
     st.markdown("### Aperçu des données")
     sample = pd.DataFrame({
         'Régie': ['ALTICE', 'NRJ GLOBAL', 'LAGARDÈRE'],
@@ -136,7 +139,7 @@ elif page == "👤 Profils Clients":
     st.markdown(f"**Client actif** : {cfg['client']}")
     st.markdown('</div>', unsafe_allow_html=True)
     st.dataframe(pd.DataFrame([{"Nom": cfg['client'], "Radios": 4, "Statut": "✅ Actif"}]), hide_index=True)
-    st.button("➕ Nouveau client", disabled=True)
+    st.button("➕ Nouveau client", disabled=True, key="btn_nouveau_client")
 
 # === PAGE 3: GESTION CAMPAGNES ===
 elif page == "📋 Gestion Campagnes":
@@ -148,14 +151,14 @@ elif page == "📋 Gestion Campagnes":
         "Nom": cfg['nom_campagne'], "Client": cfg['client'], "Budget": f"{cfg['budget']:,} €",
         "Période": f"{cfg['date_debut']} - {cfg['date_fin']}", "Statut": "✅ Active"
     }]), hide_index=True)
-    st.button("➕ Nouvelle campagne", disabled=True)
+    st.button("➕ Nouvelle campagne", disabled=True, key="btn_nouvelle_campagne")
 
 # === PAGE 4: OPTIMISATION CAMPAGNE (9 onglets exacts) ===
 elif page == "🎯 Optimisation Campagne":
     st.subheader("Configuration de l'Optimisation de Campagne")
     
     st.markdown("**Sélectionner une Campagne à Configurer**")
-    st.selectbox("Campagne", [f"{cfg['nom_campagne']} (Client: {cfg['client']})"], disabled=True)
+    st.selectbox("Campagne", [f"{cfg['nom_campagne']} (Client: {cfg['client']})"], disabled=True, key="select_campagne")
     
     st.markdown("---")
     
@@ -174,26 +177,26 @@ elif page == "🎯 Optimisation Campagne":
     
     with tab1:
         st.markdown("Les informations générales sont définies dans 'Gestion des Campagnes'.")
-        st.text_input("Public cible", value=cfg['audience_cible'], disabled=True)
-        st.text_area("Objectifs", value=cfg['objectifs'], disabled=True)
+        st.text_input("Public cible", value=cfg['audience_cible'], disabled=True, key="input_public")
+        st.text_area("Objectifs", value=cfg['objectifs'], disabled=True, key="input_objectifs")
     
     with tab2:
         st.markdown("#### Régies sélectionnées")
-        for r in cfg['regies']:
-            st.checkbox(r, value=True, disabled=True)
+        for i, r in enumerate(cfg['regies']):
+            st.checkbox(r, value=True, disabled=True, key=f"regie_{i}")
         st.markdown("#### Radios sélectionnées")
-        for r in cfg['radios']:
-            st.checkbox(r, value=True, disabled=True)
+        for i, r in enumerate(cfg['radios']):
+            st.checkbox(r, value=True, disabled=True, key=f"radio_{i}")
     
     with tab3:
         st.markdown("#### Tranches horaires définies")
         df_slots = pd.DataFrame([{**s, "Début": s["start"], "Fin": s["end"]} for s in cfg['timeSlots']])
         st.dataframe(df_slots[['name', 'Début', 'Fin']].rename(columns={'name': 'Nom'}), hide_index=True)
-        st.button("➕ Ajouter une tranche", disabled=True)
+        st.button("➕ Ajouter une tranche", disabled=True, key="btn_ajout_tranche")
         st.markdown("---")
         st.markdown("#### Spots exacts par tranche horaire (par jour)")
         st.info("Définissez exactement N spots entre une heure de début et de fin.")
-        st.button("➕ Ajouter une règle", disabled=True)
+        st.button("➕ Ajouter une règle", disabled=True, key="btn_ajout_regle_slots")
     
     with tab4:
         st.markdown("#### Exclusions")
@@ -208,7 +211,7 @@ elif page == "🎯 Optimisation Campagne":
         for t, d in excl_types:
             st.markdown(f"- **{t}** : {d}")
         st.markdown("**Aucune exclusion définie.**")
-        st.button("➕ Ajouter une exclusion", disabled=True)
+        st.button("➕ Ajouter une exclusion", disabled=True, key="btn_ajout_exclusion")
     
     with tab5:
         st.markdown("#### Contraintes de répartition GRP par régie (% min. du GRP total)")
@@ -230,7 +233,7 @@ elif page == "🎯 Optimisation Campagne":
         st.markdown("Limitez le % maximum du GRP total pour une radio donnée.")
         st.markdown("Paramètres : **Radio**, **% GRP Maximal**, **Type de période** (Jours de la semaine / Dates spécifiques), **Tranches horaires**.")
         st.markdown("**Aucune contrainte définie.**")
-        st.button("➕ Ajouter contrainte", disabled=True)
+        st.button("➕ Ajouter contrainte", disabled=True, key="btn_ajout_contrainte_maxgrp")
     
     with tab7:
         st.markdown("#### Pression Journalière")
@@ -238,7 +241,7 @@ elif page == "🎯 Optimisation Campagne":
         st.markdown("Ajout en lot : **Tous les jours** | **Jours de semaine** | **Week-end**")
         st.markdown("Pour chaque cible : **Date** (si applicable), **Type** (GRP min ou % min), **Valeur**.")
         st.markdown("**Aucun objectif journalier défini.**")
-        st.button("➕ Ajouter un objectif journalier", disabled=True)
+        st.button("➕ Ajouter un objectif journalier", disabled=True, key="btn_ajout_objectif_journalier")
     
     with tab8:
         st.markdown("#### Bornes Spots par Radio")
@@ -247,7 +250,7 @@ elif page == "🎯 Optimisation Campagne":
         st.markdown("- **Temps** : Toute la journée | Plage unique (Début–Fin) | Plusieurs plages (HH:MM–HH:MM; séparées par virgules)")
         st.markdown("- **Radios** : optionnel, filtrer par radios")
         st.markdown("**Aucune règle définie.**")
-        st.button("➕ Ajouter une règle", disabled=True)
+        st.button("➕ Ajouter une règle", disabled=True, key="btn_ajout_regle_bornes")
     
     with tab9:
         st.markdown("### Récapitulatif de la Campagne")
@@ -260,13 +263,13 @@ elif page == "🎯 Optimisation Campagne":
         st.markdown("**Exclusions** : Aucune")
         st.markdown("**Pression journalière** : Aucune")
         st.markdown("---")
-        st.checkbox("Activer le quiconce (répartition sur plusieurs jours)", value=False, disabled=True)
+        st.checkbox("Activer le quiconce (répartition sur plusieurs jours)", value=False, disabled=True, key="cb_quiconce")
         st.caption("Quiconce : évite de concentrer les spots sur un seul jour.")
         st.markdown("---")
         st.markdown('<div class="disabled-box">', unsafe_allow_html=True)
         st.markdown("**🔒 Mode Démo** : Le bouton d'optimisation est désactivé. Consultez l'onglet **Résultats** pour voir un exemple.")
         st.markdown('</div>', unsafe_allow_html=True)
-        st.button("🚀 Lancer l'optimisation", disabled=True)
+        st.button("🚀 Lancer l'optimisation", disabled=True, key="btn_lancer_optimisation")
 
 # === PAGE 5: RÉSULTATS (5 onglets + graphiques) ===
 elif page == "📊 Résultats":
@@ -302,76 +305,96 @@ elif page == "📊 Résultats":
     
     with res_tab2:
         # 4 sous-onglets graphiques : Par Régie, Par Radio, Par Jour, Par Créneau
-        chart_sub = st.radio("Vue", ["Par Régie", "Par Radio", "Par Jour", "Par Créneau"], horizontal=True)
+        chart_sub = st.radio("Vue", ["Par Régie", "Par Radio", "Par Jour", "Par Créneau"], horizontal=True, key="chart_vue")
         
         if chart_sub == "Par Régie":
             grp_regie = df_spots.groupby('regie')['GRP'].sum().reset_index()
-            fig = px.pie(grp_regie, values='GRP', names='regie', title="Répartition des GRP par régie", hole=0.4)
-            st.plotly_chart(fig, use_container_width=True)
+            if grp_regie.empty or grp_regie['GRP'].sum() == 0:
+                st.warning("Aucune donnée pour ce graphique.")
+            else:
+                fig = px.pie(grp_regie, values='GRP', names='regie', title="Répartition des GRP par régie", hole=0.4)
+                st.plotly_chart(fig, use_container_width=True)
         elif chart_sub == "Par Radio":
             grp_radio = df_spots.groupby('radio')['GRP'].sum().reset_index()
-            fig = px.pie(grp_radio, values='GRP', names='radio', title="Répartition des GRP par radio", hole=0.5)
-            st.plotly_chart(fig, use_container_width=True)
+            if grp_radio.empty or grp_radio['GRP'].sum() == 0:
+                st.warning("Aucune donnée pour ce graphique.")
+            else:
+                fig = px.pie(grp_radio, values='GRP', names='radio', title="Répartition des GRP par radio", hole=0.5)
+                st.plotly_chart(fig, use_container_width=True)
         elif chart_sub == "Par Jour":
             grp_day = df_spots.groupby('date').agg({'GRP': 'sum', 'regie': 'count'}).reset_index()
             grp_day.columns = ['date', 'GRP', 'Spots']
-            fig = go.Figure()
-            fig.add_trace(go.Bar(x=grp_day['date'], y=grp_day['GRP'], name='GRP', yaxis='y'))
-            fig.add_trace(go.Scatter(x=grp_day['date'], y=grp_day['Spots'], name='Nombre de spots', yaxis='y2', mode='lines+markers'))
-            fig.update_layout(yaxis=dict(title='GRP'), yaxis2=dict(title='Spots', overlaying='y', side='right'))
-            st.plotly_chart(fig, use_container_width=True)
+            if grp_day.empty:
+                st.warning("Aucune donnée pour ce graphique.")
+            else:
+                fig = go.Figure()
+                fig.add_trace(go.Bar(x=grp_day['date'], y=grp_day['GRP'], name='GRP', yaxis='y'))
+                fig.add_trace(go.Scatter(x=grp_day['date'], y=grp_day['Spots'], name='Nombre de spots', yaxis='y2', mode='lines+markers'))
+                fig.update_layout(yaxis=dict(title='GRP'), yaxis2=dict(title='Spots', overlaying='y', side='right'))
+                st.plotly_chart(fig, use_container_width=True)
         else:
             grp_slot = df_spots.groupby('creneau')['GRP'].sum().reset_index().sort_values('creneau')
-            fig = px.bar(grp_slot, x='creneau', y='GRP', title="Répartition par créneau horaire")
-            st.plotly_chart(fig, use_container_width=True)
+            if grp_slot.empty or grp_slot['GRP'].sum() == 0:
+                st.warning("Aucune donnée pour ce graphique.")
+            else:
+                fig = px.bar(grp_slot, x='creneau', y='GRP', title="Répartition par créneau horaire")
+                st.plotly_chart(fig, use_container_width=True)
     
     with res_tab3:
         st.markdown("#### Respect des Contraintes")
         constraint_sub = st.radio("Type", [
             "Par Régie", "Par Créneau Utilisateur", "Par Groupe de Créneaux",
             "GRP Absolu par Tranche", "Pression Journalière", "GRP Max par Radio", "Autres Contraintes"
-        ], horizontal=True)
+        ], horizontal=True, key="constraint_type")
         if constraint_sub == "Par Régie":
             regie_actual = df_spots.groupby('regie')['GRP'].sum()
             total_grp = regie_actual.sum()
-            regie_pct = (regie_actual / total_grp * 100).round(2)
-            df_check = pd.DataFrame({
-                'Régie': regie_pct.index,
-                'Objectif (%)': [cfg['grpConstraints']['regie'].get(r, 0) for r in regie_pct.index],
-                'GRP Réel (%)': regie_pct.values,
-                'Statut': ['✓' if regie_pct[r] >= cfg['grpConstraints']['regie'].get(r, 0) - 5 else '✗' for r in regie_pct.index]
-            })
-            st.dataframe(df_check, hide_index=True)
+            if total_grp == 0:
+                st.warning("Aucun GRP total.")
+            else:
+                regie_pct = (regie_actual / total_grp * 100).round(2)
+                df_check = pd.DataFrame({
+                    'Régie': regie_pct.index.tolist(),
+                    'Objectif (%)': [cfg['grpConstraints']['regie'].get(r, 0) for r in regie_pct.index],
+                    'GRP Réel (%)': regie_pct.values.tolist(),
+                    'Statut': ['✓' if regie_pct.loc[r] >= cfg['grpConstraints']['regie'].get(r, 0) - 5 else '✗' for r in regie_pct.index]
+                })
+                st.dataframe(df_check, hide_index=True)
         else:
             st.info(f"Aucune contrainte {constraint_sub.lower()} à afficher pour cette démo.")
     
     with res_tab4:
         st.markdown("#### Liste des Spots")
         col1, col2, col3, col4, col5 = st.columns(5)
+        regies_list = list(df_spots['regie'].unique())
+        radios_list = list(df_spots['radio'].unique())
+        dates_list = list(df_spots['date'].unique())
+        jours_list = list(df_spots['jour'].unique())
+        creneaux_list = sorted(df_spots['creneau'].unique().tolist())
         with col1:
-            f_regie = st.multiselect("Régie", df_spots['regie'].unique(), default=df_spots['regie'].unique())
+            f_regie = st.multiselect("Régie", regies_list, default=regies_list, key="filtre_regie")
         with col2:
-            f_radio = st.multiselect("Radio", df_spots['radio'].unique(), default=df_spots['radio'].unique())
+            f_radio = st.multiselect("Radio", radios_list, default=radios_list, key="filtre_radio")
         with col3:
-            f_date = st.multiselect("Date", df_spots['date'].unique(), default=df_spots['date'].unique())
+            f_date = st.multiselect("Date", dates_list, default=dates_list, key="filtre_date")
         with col4:
-            f_jour = st.multiselect("Jour", df_spots['jour'].unique(), default=df_spots['jour'].unique())
+            f_jour = st.multiselect("Jour", jours_list, default=jours_list, key="filtre_jour")
         with col5:
-            f_creneau = st.multiselect("Créneau", sorted(df_spots['creneau'].unique()), default=sorted(df_spots['creneau'].unique()))
+            f_creneau = st.multiselect("Créneau", creneaux_list, default=creneaux_list, key="filtre_creneau")
         
         df_f = df_spots[(df_spots['regie'].isin(f_regie)) & (df_spots['radio'].isin(f_radio)) & 
                         (df_spots['date'].isin(f_date)) & (df_spots['jour'].isin(f_jour)) & 
                         (df_spots['creneau'].isin(f_creneau))]
         
-        st.dataframe(df_f.style.format({'prix': '{:,.0f}', 'GRP': '{:.2f}'}), use_container_width=True, height=400)
+        st.dataframe(df_f.style.format({'prix': '{:,.0f}', 'GRP': '{:.2f}'}), use_container_width=True)
         csv = df_f.to_csv(index=False, encoding='utf-8-sig')
-        st.download_button("Exporter CSV", data=csv, file_name="spots_selectionnes.csv", mime="text/csv")
+        st.download_button("Exporter CSV", data=csv, file_name="spots_selectionnes.csv", mime="text/csv", key="btn_export_csv")
     
     with res_tab5:
-        cal_sub = st.radio("Vue calendrier", ["Calendrier", "Infos Spots"], horizontal=True)
+        cal_sub = st.radio("Vue calendrier", ["Calendrier", "Infos Spots"], horizontal=True, key="cal_vue")
         if cal_sub == "Calendrier":
             st.markdown("#### Calendrier des Spots par Radio")
-            sel_radio = st.selectbox("Sélectionner une radio", df_spots['radio'].unique())
+            sel_radio = st.selectbox("Sélectionner une radio", list(df_spots['radio'].unique()), key="cal_radio")
             radio_spots = df_spots[df_spots['radio'] == sel_radio]
             pivot = radio_spots.pivot_table(index='creneau', columns='date', values='GRP', aggfunc='sum', fill_value=0)
             st.dataframe(pivot, use_container_width=True)
