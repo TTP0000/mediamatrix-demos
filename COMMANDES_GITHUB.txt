@@ -1,0 +1,208 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    📋 COMMANDES À COPIER-COLLER
+                    Upload vers GitHub en 5 minutes
+═══════════════════════════════════════════════════════════════════════════════
+
+
+🚀 OPTION 1 : SCRIPT AUTOMATIQUE (LE PLUS SIMPLE)
+════════════════════════════════════════════════════════════════════════════
+
+Ouvrir PowerShell dans le dossier PythonProject, puis :
+
+    .\upload_to_github.bat
+
+Et suivre les instructions !
+
+
+🚀 OPTION 2 : COMMANDES MANUELLES (COPIER-COLLER)
+════════════════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : Se placer dans le bon dossier
+───────────────────────────────────────────────────────────────────────────
+cd C:\Users\thoms\PycharmProjects\PythonProject
+
+
+ÉTAPE 2 : Initialiser Git
+───────────────────────────────────────────────────────────────────────────
+git init
+
+
+ÉTAPE 3 : Configurer votre identité (première fois uniquement)
+───────────────────────────────────────────────────────────────────────────
+git config --global user.name "TTP0000"
+git config --global user.email "votre-email@example.com"
+
+
+ÉTAPE 4 : Ajouter tous les fichiers
+───────────────────────────────────────────────────────────────────────────
+git add .
+
+
+ÉTAPE 5 : Créer le premier commit
+───────────────────────────────────────────────────────────────────────────
+git commit -m "Initial commit - 3 versions de demos Mediamatrix"
+
+
+ÉTAPE 6 : Créer le repository sur GitHub.com
+───────────────────────────────────────────────────────────────────────────
+1. Aller sur : https://github.com/new
+2. Repository name : mediamatrix-demos
+3. Description : Vitrines Streamlit pour Mediamatrix
+4. Public ou Private : Au choix
+5. NE PAS cocher "Initialize with README"
+6. Cliquer sur "Create repository"
+
+
+ÉTAPE 7 : Lier au repository GitHub
+───────────────────────────────────────────────────────────────────────────
+git remote add origin https://github.com/TTP0000/mediamatrix-demos.git
+
+
+ÉTAPE 8 : Pousser le code
+───────────────────────────────────────────────────────────────────────────
+git branch -M main
+git push -u origin main
+
+
+✅ TERMINÉ ! Votre projet est en ligne sur :
+https://github.com/TTP0000/mediamatrix-demos
+
+
+🚀 OPTION 3 : GITHUB DESKTOP (SANS LIGNE DE COMMANDE)
+════════════════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : Télécharger GitHub Desktop
+───────────────────────────────────────────────────────────────────────────
+https://desktop.github.com/
+
+
+ÉTAPE 2 : Se connecter avec votre compte GitHub
+
+
+ÉTAPE 3 : File → New Repository
+───────────────────────────────────────────────────────────────────────────
+Name: mediamatrix-demos
+Local Path: C:\Users\thoms\PycharmProjects\PythonProject
+❌ Décocher "Initialize with README"
+
+
+ÉTAPE 4 : Commit
+───────────────────────────────────────────────────────────────────────────
+Summary: Initial commit - 3 versions de demos Mediamatrix
+Cliquer sur "Commit to main"
+
+
+ÉTAPE 5 : Publish
+───────────────────────────────────────────────────────────────────────────
+Cliquer sur "Publish repository" en haut
+Choisir Public ou Private
+Cliquer sur "Publish Repository"
+
+
+✅ TERMINÉ ! Votre projet est en ligne !
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                    🔑 AUTHENTIFICATION GITHUB
+═══════════════════════════════════════════════════════════════════════════════
+
+Si Git demande un mot de passe, vous devez utiliser un TOKEN :
+
+1. Aller sur : https://github.com/settings/tokens
+2. "Generate new token" → "Generate new token (classic)"
+3. Nom : "Git from PC"
+4. Cocher : "repo"
+5. "Generate token"
+6. COPIER LE TOKEN (vous ne le verrez qu'une fois)
+7. Coller ce token quand Git demande le mot de passe
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                    📁 FICHIERS QUI SERONT UPLOADÉS
+═══════════════════════════════════════════════════════════════════════════════
+
+Applications Streamlit (3 fichiers) :
+  ✅ demo_mediamatrix_v1_pro.py      (18 Ko)
+  ✅ demo_mediamatrix_v2_modern.py   (20 Ko)
+  ✅ demo_mediamatrix_v3_dark.py     (28 Ko)
+
+Documentation (7 fichiers) :
+  ✅ README.md                       (GitHub homepage)
+  ✅ README_DEMOS.md
+  ✅ COMPARAISON_VERSIONS.md
+  ✅ QUICK_START.md
+  ✅ RECAPITULATIF_CREATION.md
+  ✅ SOMMAIRE_VISUEL.txt
+  ✅ INDEX.md
+
+Utilitaires (4 fichiers) :
+  ✅ requirements_demo.txt
+  ✅ launch_demo.bat
+  ✅ upload_to_github.bat
+  ✅ .gitignore
+
+Guides (2 fichiers) :
+  ✅ GUIDE_GITHUB_UPLOAD.md
+  ✅ COMMANDES_GITHUB.txt            (ce fichier)
+
+TOTAL : 16 fichiers
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                    🌟 APRÈS L'UPLOAD
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Vérifier que tout est bien sur : https://github.com/TTP0000/mediamatrix-demos
+
+2. Ajouter une description au repo :
+   - Cliquer sur ⚙️ en haut à droite
+   - Description : "Vitrines Streamlit pour Mediamatrix - 3 versions"
+   - Topics : streamlit, python, optimization, plotly, demo
+
+3. (Optionnel) Déployer sur Streamlit Cloud :
+   - Aller sur : https://share.streamlit.io
+   - Se connecter avec GitHub
+   - New app → Sélectionner votre repo
+   - Main file : demo_mediamatrix_v1_pro.py
+   - Deploy !
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                    ❓ BESOIN D'AIDE ?
+═══════════════════════════════════════════════════════════════════════════════
+
+Problème "git: command not found" ?
+  → Installer Git : https://git-scm.com/download/win
+
+Problème "Permission denied" ?
+  → Utiliser un token d'accès personnel (voir section Authentification)
+
+Problème "Repository already exists" ?
+  → Utiliser un autre nom ou supprimer l'ancien repo
+
+Préférez GitHub Desktop ?
+  → C'est la méthode la plus simple pour débuter !
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                    ✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Avant de commencer :
+  [ ] Je suis dans le dossier PythonProject
+  [ ] J'ai Git installé (ou GitHub Desktop)
+  [ ] J'ai mon compte GitHub prêt (TTP0000)
+  [ ] J'ai choisi ma méthode (Option 1, 2 ou 3)
+
+Après l'upload :
+  [ ] Je vois mon repo sur GitHub
+  [ ] Le README.md s'affiche sur la page d'accueil
+  [ ] Les 16 fichiers sont visibles
+  [ ] (Optionnel) J'ai déployé sur Streamlit Cloud
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎉 VOTRE URL FINALE SERA :  https://github.com/TTP0000/mediamatrix-demos
+
+═══════════════════════════════════════════════════════════════════════════════
